@@ -38,9 +38,9 @@ def check_commit(workdir, cmds, do_extras=False):
 
     ## Attach notes, if any
     if notes:
-        attach_note("\n".join(notes), note_ref="check-commit.py")
+        attach_note("\n".join(notes), note_ref="check-commit")
     else:
-        attach_note("(no action)", note_ref="check-commit.py")
+        attach_note("(no action)", note_ref="check-commit")
 
 
 def main():
