@@ -21,9 +21,12 @@ class Cargo:
             os.unlink(self.cwd + '/Cargo.lock')
         except:
             pass
+        self.run_cmd("generate-lockfile")
         self.run_cmd("update")
         if self.ver_string < "cargo 1.31.0":
             self.fix_version("cc", "1.0.41")
+            self.fix_version("serde_json", "1.0.39")
+            self.fix_version("serde_derive", "1.0.98")
 
     def run_cmd(self, *args, env=None):
         cmd = [ "cargo", "+" + str(self.version) ]
@@ -43,9 +46,12 @@ class Cargo:
         return self.ver_string
         
     def fix_version(self, package, ver):
-        self.run_cmd("generate-lockfile")
         print(f"{now_str()} {colors.bold(self.version_str())}: {colors.green('fixing')} {colors.yellow(package)} to {colors.yellow(ver)}")
-        return self.run_cmd("update", "-p", package, "--precise", ver)
+        try:
+            self.run_cmd("update", "-p", package, "--precise", ver)
+        except: # not all packages used by all repos
+            pass
+        return f"{self.version_str()} fix {package} to {ver}"
 
     def build(self):
         print (f"{now_str()} {colors.green('Building')} with {colors.bold(self.version_str())}")

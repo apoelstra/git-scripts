@@ -36,11 +36,7 @@ def check_commit(workdir, cmds, do_extras=False):
             print(f"Unknown command {cmd[0]}")
             sys.exit(1)
 
-    ## Attach notes, if any
-    if notes:
-        attach_note("\n".join(notes), note_ref="check-commit")
-    else:
-        attach_note("(no action)", note_ref="check-commit")
+    return notes
 
 
 def main():
@@ -65,9 +61,14 @@ def main():
     ## Iterate over all commits in-place
     for commit in commit_list:
         with TemporaryWorkdir(commit) as workdir:
-            check_commit(workdir, normal_cmd)
+            notes = check_commit(workdir, normal_cmd)
             if commit == commit_list[-1]:
-                check_commit(workdir, tip_cmd)
+                notes += check_commit(workdir, tip_cmd)
+            ## Attach notes, if any
+            if notes:
+                attach_note("\n".join(notes), note_ref="check-commit", commit=commit)
+            else:
+                attach_note("(no action)", note_ref="check-commit", commit=commit)
 
     ## Determine whether we were already based on master
     master = git.Git().rev_parse('master')
@@ -76,10 +77,16 @@ def main():
     if not git.Repo().is_ancestor(tip, master) and master != base:
         with TemporaryWorkdir(base.hexsha) as workdir:
             for commit in commit_list:
-                cherry_pick(commit)
-                check_commit(workdir, normal_cmd)
+                cherry_pick(workdir, commit)
+                notes = check_commit(workdir, normal_cmd)
                 if commit == commit_list[-1]:
-                    check_commit(workdir, tip_cmd)
+                    notes += check_commit(workdir, tip_cmd)
+                ## Attach notes, if any
+                if notes:
+                    notes = ["rebased as " + git.Git().rev_parse('master') + "\n"] + notes
+                    attach_note("\n".join(notes), note_ref="check-commit", commit=commit)
+                else:
+                    attach_note("(no action)", note_ref="check-commit", commit=commit)
 
 
 if __name__ == '__main__':

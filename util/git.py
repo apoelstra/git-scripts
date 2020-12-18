@@ -32,10 +32,10 @@ def actual_merge_base(master, branch):
         i += 1
     return repo.merge_base(f"master~{i}", branch)[0]
 
-def cherry_pick(commit):
-    head = git.Git().rev_parse('HEAD')
+def cherry_pick(workdir, commit):
+    head = git.Git(working_dir=workdir).rev_parse('HEAD')
     print(f"{colors.magenta('Cherry-picking')} commit {colors.bold(str(commit))} onto {colors.bold(str(head))}")
-    git.Git().cherry_pick(commit)
-    head = git.Git().rev_parse('HEAD')
+    git.Git(working_dir=workdir).cherry_pick(commit, "--keep-redundant-commits")
+    head = git.Git(working_dir=workdir).rev_parse('HEAD')
     print(f"{colors.magenta('Cherry-picked')} as {colors.bold(str(head))}")
 
