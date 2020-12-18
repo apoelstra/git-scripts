@@ -77,13 +77,13 @@ def main():
     if not git.Repo().is_ancestor(tip, master) and master != base:
         with TemporaryWorkdir(base.hexsha) as workdir:
             for commit in commit_list:
-                cherry_pick(workdir, commit)
+                new_head = cherry_pick(workdir, commit)
                 notes = check_commit(workdir, normal_cmd)
                 if commit == commit_list[-1]:
                     notes += check_commit(workdir, tip_cmd)
                 ## Attach notes, if any
                 if notes:
-                    notes = ["rebased as " + git.Git().rev_parse('master') + "\n"] + notes
+                    notes = ["rebased as " + new_head] + notes
                     attach_note("\n".join(notes), note_ref="check-commit", commit=commit)
                 else:
                     attach_note("(no action)", note_ref="check-commit", commit=commit)

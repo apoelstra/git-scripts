@@ -38,4 +38,5 @@ def cherry_pick(workdir, commit):
     git.Git(working_dir=workdir).cherry_pick(commit, "--keep-redundant-commits")
     head = git.Git(working_dir=workdir).rev_parse('HEAD')
     print(f"{colors.magenta('Cherry-picked')} as {colors.bold(str(head))}")
+    return head
 
