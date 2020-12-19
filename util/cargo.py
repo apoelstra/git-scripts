@@ -9,65 +9,103 @@ def now_str():
     return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
 
 class Cargo:
-    def __init__(self, version = "", cwd = None):
+    def __init__(self, version=None, cwd = None):
         self.cwd = cwd
-        if version == "":
-            self.version = "stable"
-        else:
-            self.version = version
-        self.ver_string = self.run_cmd("-V").strip()
+        self.version = version
 
         try:
             os.unlink(self.cwd + '/Cargo.lock')
         except:
             pass
-        self.run_cmd("generate-lockfile")
-        self.run_cmd("update")
-        if self.ver_string < "cargo 1.31.0":
-            self.fix_version("cc", "1.0.41")
-            self.fix_version("serde_json", "1.0.39")
-            self.fix_version("serde_derive", "1.0.98")
 
-    def run_cmd(self, *args, env=None):
-        cmd = [ "cargo", "+" + str(self.version) ]
-        for arg in args:
+        self.UPDATE = Command("update", short_ver_str=version)
+        self.BUILD = Command("build", short_ver_str=version)
+        self.TEST = Command("test", short_ver_str=version)
+
+        self.UPDATE.run(self)
+        if version < "1.31.0":
+            FixVersionCommand("cc", "1.0.41", short_ver_str=version).run(self)
+            FixVersionCommand("serde_json", "1.0.39", short_ver_str=version).run(self)
+            FixVersionCommand("serde_derive", "1.0.98", short_ver_str=version).run(self)
+
+
+    def fuzz_command(self, test_case, iters=100000):
+        return FuzzCommand(test_case, iters, short_ver_str=self.version)
+
+class Command:
+    def __init__(self, cmd, args=None, short_ver_str=None, allow_fail=False):
+        self.cmd = cmd
+        self.allow_fail = allow_fail 
+
+        if short_ver_str is None:
+            short_ver_str = "stable"
+
+        self.short_ver_str = short_ver_str
+        ver_str = subprocess.check_output(["cargo", "+" + short_ver_str, "-V"])
+        self.full_ver_str = ver_str.decode('ascii').strip()
+
+        if args is None:
+            self.args = []
+        else:
+            self.args = args
+
+    def args_str(self):
+        if len(self.args) == 0:
+            return ""
+        else:
+            spacer = "' '"
+            return f"'{spacer.join(self.args)}'"
+
+    def run_str(self):
+        return f"{colors.yellow('cargo')} +{colors.bold(self.short_ver_str):15} {colors.green(self.cmd):15} {self.args_str():40} # {now_str()}"
+
+    def notes_str(self):
+        if len(self.args) == 0:
+            return f"{self.full_ver_str} {self.cmd}"
+        else:
+            return f"{self.full_ver_str} {self.cmd} {self.args_str()}"
+
+    def run(self, cargo, env=None):
+        cmd = [ "cargo", "+" + self.short_ver_str, self.cmd ]
+        for arg in self.args:
             cmd.append(arg)
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.cwd, env=env)
-        out, err = proc.communicate()
-        rv = proc.poll()
-        if rv:
-            print ("Unexpected return value %d from cargo " % rv, args)
-            print (err.decode("ascii"))
-            raise subprocess.CalledProcessError(rv, "cargo", err)
 
-        return out.decode("ascii")
+        print(self.run_str())
+        completed = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cargo.cwd, env=env)
+        if completed.returncode != 0:
+            if self.allow_fail:
+                print ("## (above command failed, continuing)")
+            else:
+                print ("Command failed:", ' '.join(cmd))
+                print (completed.stderr.decode("ascii"))
+                completed.check_returncode() # trigger an exception
 
-    def version_str(self):
-        return self.ver_string
-        
-    def fix_version(self, package, ver):
-        print(f"{now_str()} {colors.bold(self.version_str())}: {colors.green('fixing')} {colors.yellow(package)} to {colors.yellow(ver)}")
-        try:
-            self.run_cmd("update", "-p", package, "--precise", ver)
-        except: # not all packages used by all repos
-            pass
-        return f"{self.version_str()} fix {package} to {ver}"
+        return completed.stdout.decode("ascii")
 
-    def build(self):
-        print (f"{now_str()} {colors.green('Building')} with {colors.bold(self.version_str())}")
-        self.run_cmd("build")
-        return self.version_str() + " build"
-        
-    def test(self):
-        print (f"{now_str()} {colors.green('Testing')} with {colors.bold(self.version_str())}")
-        self.run_cmd("test")
-        return self.version_str() + " test"
 
-    def fuzz(self, test_case, iters=100000):
-        print (f"{now_str()} {colors.green('Fuzzing')} {colors.bold(test_case)} with {colors.bold(str(iters))} iters with {colors.bold(self.version_str())}")
-        env = os.environ.copy()
+class FixVersionCommand(Command):
+    def __init__(self, package, version, short_ver_str=None):
+        super().__init__("update", ["-p", package, "--precise", version], short_ver_str, allow_fail=True)
+
+class FuzzCommand(Command):
+    def __init__(self, test_case, iters, short_ver_str=None):
+        super().__init__("hfuzz", ["run", test_case], short_ver_str)
+        self.iters = iters
+
+    def run(self, cargo, env=None):
+        if env is None:
+            env = os.environ.copy()
+        else:
+            env |= os.environ.copy()
+
         env['HFUZZ_BUILD_ARGS'] = '--features honggfuzz_fuzz'
-        env['HFUZZ_RUN_ARGS'] = '--exit_upon_crash -v -N' + str(iters)
-        self.run_cmd("hfuzz", "run", test_case, env=env)
-        return f"{self.version_str()} fuzz {test_case} ({iters} iters)"
+        env['HFUZZ_RUN_ARGS'] = '--exit_upon_crash -v -N' + str(self.iters)
+        super().run(cargo, env=env)
+
+    def notes_str(self):
+        return f"{self.full_ver_str}) cargo self.short_ver_str {self.cmd} {self.args_str()} # iters {self.iters}"
+
+    def run_str(self):
+        # append after date comment
+        return super().run_str() + " HFUZZ_BUILD_ARGS='--features honggfuzz_fuzz' HFUZZ_RUN_ARGS=-N" + str(self.iters) 
 
