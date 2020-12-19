@@ -28,9 +28,9 @@ class TemporaryWorkdir:
 def actual_merge_base(master, branch):
     repo = git.Repo()
     i = 0
-    while repo.is_ancestor(branch, f"master~{i}"):
+    while repo.is_ancestor(branch, f"{master}~{i}"):
         i += 1
-    return repo.merge_base(f"master~{i}", branch)[0]
+    return repo.merge_base(f"{master}~{i}", branch)[0]
 
 def cherry_pick(workdir, commit):
     head = git.Git(working_dir=workdir).rev_parse('HEAD')

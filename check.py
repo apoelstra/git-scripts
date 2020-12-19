@@ -42,6 +42,7 @@ def check_commit(workdir, cmds, do_extras=False):
 def main():
     ## Parse commands
     parser = argparse.ArgumentParser("Runs checks on the current commit (in a /tmp workdir) and records them as git notes")
+    parser.add_argument('--master', default='master', help="Set the master branch that we should base work off of")
     args, unknown_args = parser.parse_known_args()
     # Commands starting with ! should only be run on the tip
     normal_cmd = []
@@ -52,11 +53,17 @@ def main():
         else:
             normal_cmd.append(cmd)
 
+    ## Determine whether we were already based on master
+    master = git.Git().rev_parse(args.master)
+
     ## Get commits which are on the provided ref but not on master
     tip = unknown_args[0]
-    base = actual_merge_base('master', tip)
+    base = actual_merge_base(args.master, tip)
     commit_list = [x.hexsha for x in git.Repo().iter_commits(f"{base}..{tip}")]
     commit_list.reverse()
+
+    print ("Master is", master)
+    print ("Merge base is", base)
 
     ## Iterate over all commits in-place
     for commit in commit_list:
@@ -70,11 +77,9 @@ def main():
             else:
                 attach_note("(no action)", note_ref="check-commit", commit=commit)
 
-    ## Determine whether we were already based on master
-    master = git.Git().rev_parse('master')
 
-    ## If not, rebase and check each PR
-    if not git.Repo().is_ancestor(tip, master) and master != base:
+    ## If not already based on master, rebase and check each PR
+    if master != base.hexsha:
         with TemporaryWorkdir(base.hexsha) as workdir:
             for commit in commit_list:
                 new_head = cherry_pick(workdir, commit)
