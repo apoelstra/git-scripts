@@ -81,8 +81,6 @@ def main():
             ## Attach notes, if any
             if notes:
                 attach_note("\n".join(notes), note_ref="check-commit", commit=commit)
-            else:
-                attach_note("(no action)", note_ref="check-commit", commit=commit)
 
 
     ## If not already based on master, rebase and check each PR
@@ -97,8 +95,6 @@ def main():
                 if notes:
                     notes = ["rebased as " + new_head] + notes
                     attach_note("\n".join(notes), note_ref="check-commit", commit=commit)
-                else:
-                    attach_note("(no action)", note_ref="check-commit", commit=commit)
 
 
 if __name__ == '__main__':
