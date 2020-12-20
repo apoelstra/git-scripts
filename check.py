@@ -42,8 +42,6 @@ def check_commit(workdir, cmds, notes, do_extras=False):
             print(f"Unknown command {cmd[0]}")
             sys.exit(1)
 
-    return notes
-
 
 def main():
     ## Parse commands
@@ -77,7 +75,7 @@ def main():
             notes = []
             check_commit(workdir, normal_cmd, notes)
             if commit == commit_list[-1]:
-                notes += check_commit(workdir, tip_cmd, notes)
+                check_commit(workdir, tip_cmd, notes)
             ## Attach notes, if any
             if notes:
                 attach_note("\n".join(notes), note_ref="check-commit", commit=commit)
@@ -87,10 +85,11 @@ def main():
     if master != base.hexsha:
         with TemporaryWorkdir(base.hexsha) as workdir:
             for commit in commit_list:
+                notes = []
                 new_head = cherry_pick(workdir, commit)
-                notes = check_commit(workdir, normal_cmd)
+                check_commit(workdir, normal_cmd, notes)
                 if commit == commit_list[-1]:
-                    notes += check_commit(workdir, tip_cmd)
+                    check_commit(workdir, tip_cmd, notes)
                 ## Attach notes, if any
                 if notes:
                     notes = ["rebased as " + new_head] + notes
