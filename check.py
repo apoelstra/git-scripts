@@ -92,6 +92,7 @@ def main():
                     check_commit(workdir, tip_cmd, notes)
                 ## Attach notes, if any
                 if notes:
+                    attach_note("\n".join(notes), note_ref="check-commit", commit=new_head)
                     notes = [f"rebased for merge-testing on {base} as {new_head}"] + notes
                     attach_note("\n".join(notes), note_ref="check-commit", commit=commit)
 
