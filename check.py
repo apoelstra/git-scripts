@@ -17,6 +17,7 @@ def update_notes(cargo, cmd, notes):
         print("# skipping (already done)", cmd.run_str())
     else:
         cmd.run(cargo)
+        notes += [new_note]
 
 def check_commit(workdir, cmds, notes, do_extras=False):
     ## Run commands, collecting notes
