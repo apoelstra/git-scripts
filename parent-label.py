@@ -74,7 +74,7 @@ def main():
         for n, ancestor in enumerate(ancestor_list, start=1):
             new_note = f"PR: {args.url_prefix}{pr.number} ({n}/{len(ancestor_list)})"
             if not check_is_note(new_note, ".", commit=ancestor, note_ref="label-pr"):
-                attach_note(new_note, commit=ancestor)
+                attach_note(new_note, commit=ancestor, note_ref="label-pr")
                 noted += 1
         print (f"PR {args.url_prefix}{pr.number}: noted {noted}/{len(ancestor_list)}")
 
