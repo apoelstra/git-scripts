@@ -103,7 +103,7 @@ class FuzzCommand(Command):
         super().run(cargo, env=env)
 
     def notes_str(self):
-        return f"{self.full_ver_str}) cargo self.short_ver_str {self.cmd} {self.args_str()} # iters {self.iters}"
+        return f"{self.full_ver_str}) cargo hfuzz run {self.args[1]} # iters {self.iters}"
 
     def run_str(self):
         # append after date comment

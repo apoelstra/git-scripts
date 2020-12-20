@@ -63,7 +63,7 @@ def main():
     ## Get commits which are on the provided ref but not on master
     tip = unknown_args[0]
     base = actual_merge_base(args.master, tip)
-    commit_list = [x.hexsha for x in git.Repo().iter_commits(f"{base}..{tip}")]
+    commit_list = [x for x in git.Repo().iter_commits(f"{base}..{tip}")]
     commit_list.reverse()
 
     print ("Master is", master)
@@ -92,7 +92,7 @@ def main():
                     check_commit(workdir, tip_cmd, notes)
                 ## Attach notes, if any
                 if notes:
-                    notes = ["rebased as " + new_head] + notes
+                    notes = [f"rebased for merge-testing on {base} as {new_head}"] + notes
                     attach_note("\n".join(notes), note_ref="check-commit", commit=commit)
 
 

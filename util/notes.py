@@ -8,12 +8,12 @@ def attach_note(message, commit='HEAD', note_ref = "commits"):
     date = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
 
     repo = git.Repo()
-    with repo.git.custom_environment(GIT_NOTES_REF="refs/notes/" + note_ref) as mygit:
+    with repo.git.custom_environment(GIT_NOTES_REF="refs/notes/" + note_ref):
         repo.git.notes("append", "-m", date + "\n" + message, commit)
 
 def check_is_note(item, workdir, commit='HEAD', note_ref = "commits"):
     repo = git.Repo(path=workdir, search_parent_directories=True)
-    with repo.git.custom_environment(GIT_NOTES_REF="refs/notes/" + note_ref) as mygit:
+    with repo.git.custom_environment(GIT_NOTES_REF="refs/notes/" + note_ref):
         try:
             notes = repo.git.notes("show", commit)
         except:
