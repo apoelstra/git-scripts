@@ -29,6 +29,18 @@ class Cargo:
             FixVersionCommand("serde_derive", "1.0.98", short_ver_str=version).run(self)
 
 
+    def build_command(self, features):
+        ret = self.BUILD
+        if features is not None:
+            ret.args = [ f"--features={' '.join(features)}" ]
+        return ret
+
+    def test_command(self, features):
+        ret = self.TEST
+        if features is not None:
+            ret.args = [ f"--features={' '.join(features)}" ]
+        return ret
+
     def fuzz_command(self, test_case, iters=100000):
         return FuzzCommand(test_case, iters, short_ver_str=self.version)
 

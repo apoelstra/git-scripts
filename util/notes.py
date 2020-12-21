@@ -20,3 +20,11 @@ def check_is_note(item, workdir, commit='HEAD', note_ref = "commits"):
             notes = ""
         return item in notes
 
+def update_notes(notes, new_note, command, commit='HEAD', workdir=None, note_ref='commits'):
+    if check_is_note(new_note, workdir, commit=commit, note_ref=note_ref):
+        print ("# already done", new_note) # Note already inserted
+    else:
+        command()
+        notes += [new_note]
+
+
