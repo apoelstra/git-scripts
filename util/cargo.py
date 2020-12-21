@@ -69,7 +69,7 @@ class Command:
             return f"'{spacer.join(self.args)}'"
 
     def run_str(self):
-        return f"{colors.yellow('cargo')} +{colors.bold(self.short_ver_str):15} {colors.green(self.cmd):15} {self.args_str():40} # {now_str()}"
+        return f"{colors.yellow('cargo')} +{colors.bold(self.short_ver_str):15} {colors.green(self.cmd):15} {self.args_str():40} # {now_str()} / {self.full_ver_str}"
 
     def notes_str(self):
         if len(self.args) == 0:
