@@ -14,5 +14,5 @@ class Check:
     def __init__(self, json):
         self.only_tip = json.get('only-tip', False)
 
-from checks import rust
+from checks import rust,wasm_pack
 
