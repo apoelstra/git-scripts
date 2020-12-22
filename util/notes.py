@@ -1,8 +1,8 @@
 
-import git
+import git # type: ignore
 import os
-
 from time import gmtime, strftime
+from typing import List
 
 def attach_note(message, commit='HEAD', note_ref = "commits"):
     date = strftime("%Y-%m-%dT%H:%M:%S", gmtime())
@@ -11,7 +11,7 @@ def attach_note(message, commit='HEAD', note_ref = "commits"):
     with repo.git.custom_environment(GIT_NOTES_REF="refs/notes/" + note_ref):
         repo.git.notes("append", "-m", date + "\n" + message, commit)
 
-def check_is_note(item, workdir, commit='HEAD', note_ref = "commits"):
+def check_is_note(item: str, workdir: str, commit='HEAD', note_ref = "commits"):
     repo = git.Repo(path=workdir, search_parent_directories=True)
     with repo.git.custom_environment(GIT_NOTES_REF="refs/notes/" + note_ref):
         try:
@@ -20,7 +20,7 @@ def check_is_note(item, workdir, commit='HEAD', note_ref = "commits"):
             notes = ""
         return item in notes
 
-def update_notes(notes, new_note, command, commit='HEAD', workdir=None, note_ref='commits'):
+def update_notes(notes: List[str], new_note: str, command, commit='HEAD', workdir=None, note_ref='commits'):
     if check_is_note(new_note, workdir, commit=commit, note_ref=note_ref):
         print ("# already done", new_note) # Note already inserted
     else:

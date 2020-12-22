@@ -1,19 +1,20 @@
 #!/bin/python
 
 import argparse
-import git
+import git # type: ignore
 import glob
 import json
 import os
+from typing import List
 import sys
 
 import checks
 from util import colors
 from util.git import TemporaryWorkdir, cherry_pick, actual_merge_base
-from util.cargo import Cargo
+from util.cargo import Cargo, Command
 from util.notes import attach_note, check_is_note
 
-def main():
+def main() -> None:
     ## Parse commands
     parser = argparse.ArgumentParser("Runs checks on the current commit (in a /tmp workdir) and records them as git notes")
     parser.add_argument('--master', default='master', help="Set the master branch that we should base work off of")
@@ -28,7 +29,7 @@ def main():
     commit_list = [x for x in git.Repo().iter_commits(f"{base}..{tip}")]
     commit_list.reverse()
 
-    commands = json.loads(unknown_args[1], object_hook=checks.json_object_hook)
+    commands: List[Command] = json.loads(unknown_args[1], object_hook=checks.json_object_hook)
 
     print ("Master is", master)
     print ("Merge base is", base)
@@ -36,7 +37,7 @@ def main():
     ## Iterate over all commits in-place
     for commit in commit_list:
         with TemporaryWorkdir(commit) as workdir:
-            notes = []
+            notes: List[str] = []
             ## Run all commands
             for command in commands:
                 if commit == commit_list[-1] or not command.only_tip:

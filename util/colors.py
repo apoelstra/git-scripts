@@ -8,14 +8,14 @@ class bcolors:
     BOLD = '\033[1m'
     ENDC = '\033[0m'
 
-def bold(s):
+def bold(s: str):
     return bcolors.BOLD + s + bcolors.ENDC
 
-def yellow(s):
+def yellow(s: str):
     return bcolors.YELLOW + s + bcolors.ENDC
 
-def magenta(s):
+def magenta(s: str):
     return bcolors.MAGENTA + s + bcolors.ENDC
 
-def green(s):
+def green(s: str):
     return bcolors.GREEN + s + bcolors.ENDC

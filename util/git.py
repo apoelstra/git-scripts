@@ -1,5 +1,5 @@
 
-import git
+import git # type: ignore
 import subprocess
 import tempfile
 
@@ -24,7 +24,7 @@ class TemporaryWorkdir:
         self.tempdir.__exit__(exc_type, exc_val, exc_tb)
         return False
 
-def actual_merge_base(master, branch):
+def actual_merge_base(master: git.Commit, branch: git.Commit) -> git.Commit:
     repo = git.Repo()
     i = 0
     while repo.is_ancestor(branch, f"{master}~{i}"):
