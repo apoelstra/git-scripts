@@ -11,6 +11,7 @@ class Cargo:
         self.version = version
         if cwd_suffix is not None:
             self.cwd += f"/{cwd_suffix}"
+        self.cwd_suffix = cwd_suffix
 
         try:
             os.unlink(self.cwd + '/Cargo.lock')
@@ -22,6 +23,12 @@ class Cargo:
         self.TEST = Command("test", cwd_suffix=cwd_suffix, short_ver_str=version)
         self.RUN = Command("run", cwd_suffix=cwd_suffix, short_ver_str=version)
 
+        self.init_commands = [ self.UPDATE ]
+        if self.version < "1.31.0":
+            self.init_commands.append(FixVersionCommand("cc", "1.0.41", cwd_suffix=cwd_suffix, short_ver_str=version))
+            self.init_commands.append(FixVersionCommand("serde_json", "1.0.39", cwd_suffix=cwd_suffix, short_ver_str=version))
+            self.init_commands.append(FixVersionCommand("serde_derive", "1.0.98", cwd_suffix=cwd_suffix, short_ver_str=version))
+
         self.initialized = False
 
     def initialize(self):
@@ -29,12 +36,8 @@ class Cargo:
             return
         self.initialized = True
 
-        self.UPDATE.run(self)
-        if self.version < "1.31.0":
-            FixVersionCommand("cc", "1.0.41", cwd_suffix=cwd_suffix, short_ver_str=version).run(self)
-            FixVersionCommand("serde_json", "1.0.39", cwd_suffix=cwd_suffix, short_ver_str=version).run(self)
-            FixVersionCommand("serde_derive", "1.0.98", cwd_suffix=cwd_suffix, short_ver_str=version).run(self)
-
+        for command in self.init_commands:
+            command.run(self)
 
     def build_command(self, features):
         ret = self.BUILD
@@ -76,6 +79,9 @@ class Command:
         self.short_ver_str = short_ver_str
         ver_str = subprocess.check_output(["cargo", "+" + short_ver_str, "-V"])
         self.full_ver_str = ver_str.decode('ascii').strip()
+
+        ver_str = subprocess.check_output(["rustc", "+" + short_ver_str, "-V"])
+        self.full_ver_str += ', ' + ver_str.decode('ascii').strip()
 
         if args is None:
             self.args = []
