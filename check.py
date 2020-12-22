@@ -13,38 +13,6 @@ from util.git import TemporaryWorkdir, cherry_pick, actual_merge_base
 from util.cargo import Cargo
 from util.notes import attach_note, check_is_note
 
-def update_notes(cargo, cmd, notes):
-    new_note = cmd.notes_str()
-    if check_is_note(new_note, cargo.cwd, note_ref="check-commit"):
-        print("# skipping (already done)", cmd.run_str())
-    else:
-        cmd.run(cargo)
-        notes += [new_note]
-
-def check_commit(workdir, cmds, notes, do_extras=False):
-    ## Run commands, collecting notes
-    for command in cmds:
-        cmd = command.split('-')
-        # rust or rust-1.29.0
-        if cmd[0] == 'rust':
-            version = 'stable' if len(cmd) < 2 else cmd[1]
-            cargo = Cargo(cwd=workdir, version=version)
-            update_notes(cargo, cargo.BUILD, notes)
-            update_notes(cargo, cargo.TEST, notes)
-        # fuzz-hongfuzzdir-iters
-        elif cmd[0] == 'fuzz':
-            iters = 1000000 if len(cmd) < 2 else cmd[1]
-            direct = '-'.join(cmd[2:]) # lol am i pythoning right
-            cargo = Cargo(cwd=workdir + '/' + direct, version='nightly')
-            tests = glob.glob(direct + '/*.rs')
-            for test in tests:
-                test = test.split('/')[-1][:-3] # strip .rs
-                update_notes(cargo, cargo.fuzz_command(test, iters), notes)
-        else:
-            print(f"Unknown command {cmd[0]}")
-            sys.exit(1)
-
-
 def main():
     ## Parse commands
     parser = argparse.ArgumentParser("Runs checks on the current commit (in a /tmp workdir) and records them as git notes")
