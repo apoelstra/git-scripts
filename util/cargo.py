@@ -1,13 +1,9 @@
 
 import os
 import subprocess
-import time
 import toml
 
-from util import colors
-
-def now_str():
-    return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
+from util import colors, now_str
 
 class Cargo:
     def __init__(self, version=None, cwd=None, cwd_suffix=None):
@@ -26,8 +22,15 @@ class Cargo:
         self.TEST = Command("test", cwd_suffix=cwd_suffix, short_ver_str=version)
         self.RUN = Command("run", cwd_suffix=cwd_suffix, short_ver_str=version)
 
+        self.initialized = False
+
+    def initialize(self):
+        if self.initialized:
+            return
+        self.initialized = True
+
         self.UPDATE.run(self)
-        if version < "1.31.0":
+        if self.version < "1.31.0":
             FixVersionCommand("cc", "1.0.41", cwd_suffix=cwd_suffix, short_ver_str=version).run(self)
             FixVersionCommand("serde_json", "1.0.39", cwd_suffix=cwd_suffix, short_ver_str=version).run(self)
             FixVersionCommand("serde_derive", "1.0.98", cwd_suffix=cwd_suffix, short_ver_str=version).run(self)
@@ -103,6 +106,7 @@ class Command:
         return prefix
 
     def run(self, cargo, env=None):
+        cargo.initialize()
         cmd = [ "cargo", "+" + self.short_ver_str, self.cmd ]
         for arg in self.args:
             cmd.append(arg)
