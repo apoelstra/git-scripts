@@ -92,7 +92,7 @@ class Command:
         prefix = f"{colors.yellow('cargo')} +{colors.bold(self.cargo.version):15} {colors.green(self.cmd):15} {self.args_str():40}"
         prefix += f" # {now_str()}"
         if self.cargo.fuzz_target:
-            prefix += " RUSTFLAGS='--cfg=rust_secp_fuzz'"
+            prefix += " RUST{DOC}FLAGS='--cfg=rust_secp_fuzz'"
         if self.cargo.cwd_suffix is not None:
             prefix += f" / {self.cargo.cwd_suffix}"
         prefix += f" / {self.cargo.full_ver_str}"
@@ -116,6 +116,7 @@ class Command:
 
         if self.cargo.fuzz_target:
             env['RUSTFLAGS'] = (env.get('RUSTFLAGS') or '') + '--cfg=rust_secp_fuzz'
+            env['RUSTDOCFLAGS'] = (env.get('RUSTDOCFLAGS') or '') + '--cfg=rust_secp_fuzz'
 
         self.cargo.initialize()
         cmd = [ "cargo", "+" + self.cargo.version, self.cmd ]

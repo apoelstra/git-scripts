@@ -11,13 +11,14 @@ import sys
 import checks
 from util import colors
 from util.git import TemporaryWorkdir, cherry_pick, actual_merge_base
-from util.cargo import Cargo, Command
+from util.cargo import Cargo 
 from util.notes import attach_note, check_is_note
 
 def main() -> None:
     ## Parse commands
     parser = argparse.ArgumentParser("Runs checks on the current commit (in a /tmp workdir) and records them as git notes")
     parser.add_argument('--master', default='master', help="Set the master branch that we should base work off of")
+    parser.add_argument('--one', action='store_true', help="Only check one commit rather than iterating")
     args, unknown_args = parser.parse_known_args()
 
     ## Determine whether we were already based on master
@@ -29,15 +30,27 @@ def main() -> None:
     commit_list = [x for x in git.Repo().iter_commits(f"{base}..{tip}")]
     commit_list.reverse()
 
-    commands: List[Command] = json.loads(unknown_args[1], object_hook=checks.json_object_hook)
+    commands: List[checks.Check] = json.loads(unknown_args[1], object_hook=checks.json_object_hook)
 
     print ("Master is", master)
     print ("Merge base is", base)
 
+    if args.one:
+        print ("Only checking the one commit", tip)
+        with TemporaryWorkdir(tip) as workdir:
+            notes: List[str] = []
+            ## Run all commands
+            for command in commands:
+                command.run(workdir, notes)
+            ## Attach notes, if any
+            if notes:
+                attach_note("\n".join(notes), note_ref="check-commit", commit=tip)
+        return
+
     ## Iterate over all commits in-place
     for commit in commit_list:
         with TemporaryWorkdir(commit) as workdir:
-            notes: List[str] = []
+            notes = []
             ## Run all commands
             for command in commands:
                 if commit == commit_list[-1] or not command.only_tip:
@@ -49,7 +62,7 @@ def main() -> None:
 
     ## If not already based on master, rebase and check each PR
     if master != base.hexsha:
-        with TemporaryWorkdir(base.hexsha) as workdir:
+        with TemporaryWorkdir(master) as workdir:
             for commit in commit_list:
                 notes = []
                 new_head = cherry_pick(workdir, commit)

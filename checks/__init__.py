@@ -14,5 +14,8 @@ class Check:
     def __init__(self, json):
         self.only_tip = json.get('only-tip', False)
 
+    def run(self, workdir, notes):
+        raise NotImplementedError()
+
 from checks import rust,wasm_pack
 
