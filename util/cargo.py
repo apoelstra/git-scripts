@@ -47,14 +47,16 @@ class Cargo:
 
     def build_command(self, features: Optional[List[str]]):
         ret = self.BUILD
+        ret.args = ['--no-default-features']
         if features is not None:
-            ret.args = [ f"--features={' '.join(features)}" ]
+            ret.args += [ f"--features={' '.join(features)}" ]
         return ret
 
     def test_command(self, features: Optional[List[str]]):
         ret = self.TEST
+        ret.args = ['--no-default-features']
         if features is not None:
-            ret.args = [ f"--features={' '.join(features)}" ]
+            ret.args += [ f"--features={' '.join(features)}" ]
         return ret
 
     def example_command(self, example_toml: Dict[str, str]):
