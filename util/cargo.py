@@ -7,13 +7,14 @@ from typing import Any, Dict, List, MutableMapping, Optional
 from util import colors, now_str
 
 class Cargo:
-    def __init__(self, version: Optional[str] = None, cwd: str = '.', cwd_suffix: Optional[str] = None, fuzz_target: bool = False):
+    def __init__(self, version: Optional[str] = None, cwd: str = '.', cwd_suffix: Optional[str] = None, fuzz_target: bool = False, force_default_features: bool = False):
         self.cwd: str = cwd
         self.version: str = version or 'stable'
         if cwd_suffix is not None:
             self.cwd += f"/{cwd_suffix}"
         self.cwd_suffix: Optional[str] = cwd_suffix
         self.fuzz_target: bool = fuzz_target
+        self.force_default_features: bool = force_default_features
 
         ver_str: bytes = subprocess.check_output(["cargo", "+" + self.version, "-V"])
         self.full_ver_str: str = ver_str.decode('ascii').strip()
@@ -47,14 +48,20 @@ class Cargo:
 
     def build_command(self, features: Optional[List[str]]):
         ret = self.BUILD
-        ret.args = ['--no-default-features']
+        if self.force_default_features:
+            ret.args = []
+        else:
+            ret.args = ['--no-default-features']
         if features is not None:
             ret.args += [ f"--features={' '.join(features)}" ]
         return ret
 
     def test_command(self, features: Optional[List[str]]):
         ret = self.TEST
-        ret.args = ['--no-default-features']
+        if self.force_default_features:
+            ret.args = []
+        else:
+            ret.args = ['--no-default-features']
         if features is not None:
             ret.args += [ f"--features={' '.join(features)}" ]
         return ret

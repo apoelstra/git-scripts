@@ -14,14 +14,15 @@ class RustChecks(Check):
     def __init__(self, json):
         super().__init__(json)
         version = json.get('version', 'stable')
+        force_default_features = json.get('force-default-features', False)
         if isinstance(version, list):
-            self.checks = [RustCheck(v, json) for v in version]
+            self.checks = [RustCheck(v, json, force_default_features=force_default_features) for v in version]
             if json.get('try_fuzz_target'):
-                self.checks += [RustCheck(v, json, fuzz_target=True) for v in version]
+                self.checks += [RustCheck(v, json, fuzz_target=True, force_default_features=force_default_features) for v in version]
         else:
             if json.get('try_fuzz_target'):
-                self.checks = [RustCheck(version, json, fuzz_target=True)]
-            self.checks = [RustCheck(version, json)]
+                self.checks = [RustCheck(version, json, fuzz_target=True, force_default_features=force_default_features)]
+            self.checks = [RustCheck(version, json, force_default_features=force_default_features)]
 
     def run(self, workdir, notes):
         for check in self.checks:
@@ -30,10 +31,11 @@ class RustChecks(Check):
 class RustCheck(Check):
     TYPE = None
 
-    def __init__(self, version, json, fuzz_target=False):
+    def __init__(self, version, json, fuzz_target=False, force_default_features=False):
         super().__init__(json)
         self.version: str = version
         self.fuzz_target: bool = fuzz_target
+        self.force_default_features: bool = force_default_features
         self.jobs: List[str] = json.get('jobs', ['build', 'test', 'examples'])
         self.fuzz_dir: str = json.get('fuzz_dir', 'fuzz/fuzz_targets')
         self.fuzz_iters: int = json.get('fuzz_iters', 1000000)
@@ -48,13 +50,13 @@ class RustCheck(Check):
             update_notes(notes, cmd.notes_str(), lambda: cmd.run(), workdir=workdir, note_ref='check-commit')
 
         if self.jobs != ['fuzz']:
-            cargo = Cargo(cwd=workdir, cwd_suffix=self.workdir_suffix, version=self.version, fuzz_target=self.fuzz_target)
+            cargo = Cargo(cwd=workdir, cwd_suffix=self.workdir_suffix, version=self.version, fuzz_target=self.fuzz_target, force_default_features=self.force_default_features)
         if 'fuzz' in self.jobs:
             cwd_suffix: str = ''
             if self.workdir_suffix is not None:
                 cwd_suffix = self.workdir_suffix
             cwd_suffix += '/' + self.fuzz_dir
-            fuzz_cargo = Cargo(cwd=workdir, cwd_suffix=cwd_suffix, version=self.version, fuzz_target=True)
+            fuzz_cargo = Cargo(cwd=workdir, cwd_suffix=cwd_suffix, version=self.version, fuzz_target=True, force_default_features=self.force_default_features)
 
         # Run jobs
         for job in self.jobs:
