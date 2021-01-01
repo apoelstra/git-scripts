@@ -17,5 +17,5 @@ class Check:
     def run(self, workdir, notes):
         raise NotImplementedError()
 
-from checks import rust,wasm_pack
+from checks import autotools,rust,wasm_pack
 

@@ -34,6 +34,7 @@ def main() -> None:
 
     print ("Master is", master)
     print ("Merge base is", base)
+    print ("Commands to run", len(commands))
 
     if args.one:
         print ("Only checking the one commit", tip)
