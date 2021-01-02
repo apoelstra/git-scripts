@@ -14,7 +14,7 @@ class Check:
     def __init__(self, json):
         self.only_tip = json.get('only-tip', False)
 
-    def run(self, workdir, notes):
+    def run(self, commit, notes):
         raise NotImplementedError()
 
 from checks import autotools,rust,wasm_pack

@@ -6,8 +6,8 @@ import tempfile
 from util import colors
 
 class TemporaryWorkdir:
-    def __init__(self, commit=git.Git().rev_parse('HEAD')):
-        self.commit = commit
+    def __init__(self, commit: str='HEAD'):
+        self.commit = git.Git().rev_parse(commit)
         self.tempdir = tempfile.TemporaryDirectory()
 
     def __enter__(self):

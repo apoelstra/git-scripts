@@ -38,44 +38,43 @@ def main() -> None:
 
     if args.one:
         print ("Only checking the one commit", tip)
-        with TemporaryWorkdir(tip) as workdir:
-            notes: List[str] = []
-            ## Run all commands
-            for command in commands:
-                command.run(workdir, notes)
-            ## Attach notes, if any
-            if notes:
-                attach_note("\n".join(notes), note_ref="check-commit", commit=tip)
+        notes: List[str] = []
+        ## Run all commands
+        for command in commands:
+            command.run(tip, notes)
+        ## Attach notes, if any
+        if notes:
+            attach_note("\n".join(notes), note_ref="check-commit", commit=tip)
         return
 
     ## Iterate over all commits in-place
     for commit in commit_list:
-        with TemporaryWorkdir(commit) as workdir:
-            notes = []
-            ## Run all commands
-            for command in commands:
-                if commit == commit_list[-1] or not command.only_tip:
-                    command.run(workdir, notes)
+        notes = []
+        ## Run all commands
+        for command in commands:
+            if commit == commit_list[-1] or not command.only_tip:
+                command.run(commit, notes)
 
-            ## Attach notes, if any
-            if notes:
-                attach_note("\n".join(notes), note_ref="check-commit", commit=commit)
+        ## Attach notes, if any
+        if notes:
+            attach_note("\n".join(notes), note_ref="check-commit", commit=commit)
 
     ## If not already based on master, rebase and check each PR
     if master != base.hexsha:
-        with TemporaryWorkdir(master) as workdir:
-            for commit in commit_list:
-                notes = []
-                new_head = cherry_pick(workdir, commit)
-                ## Run all commands
-                for command in commands:
-                    if commit == commit_list[-1] or not command.only_tip:
-                        command.run(workdir, notes)
-                ## Attach notes, if any
-                if notes:
-                    attach_note("\n".join(notes), note_ref="check-commit", commit=new_head)
-                    notes = [f"rebased for merge-testing on {base} as {new_head}"] + notes
-                    attach_note("\n".join(notes), note_ref="check-commit", commit=commit)
+        for commit in commit_list:
+            notes = []
+            new_head = cherry_pick(commit, commit)
+            ## Run all commands
+            for command in commands:
+                if commit == commit_list[-1] or not command.only_tip:
+                    command.run(commit, notes)
+            ## Attach notes, if any
+            if notes:
+                attach_note("\n".join(notes), note_ref="check-commit", commit=new_head)
+                notes = [f"rebased for merge-testing on {base} as {new_head}"] + notes
+                attach_note("\n".join(notes), note_ref="check-commit", commit=commit)
+
+    print("\a")
 
 
 if __name__ == '__main__':
