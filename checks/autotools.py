@@ -5,7 +5,7 @@ from typing import Any, Dict, List, MutableMapping, Optional
 
 from checks import Check
 from util.cargo import Cargo, Command
-from util.notes import update_notes
+from util.notes import check_is_note, update_notes
 
 class AutoToolsCheck(Check):
     TYPE = 'autotools'
@@ -35,6 +35,8 @@ class AutoToolsCheck(Check):
 
     def run(self, workdir: str, notes: List[str]):
         for config in self.configure_matrix:
+            if check_is_note(new_note, workdir, note_ref=note_ref):
+                print ("# already done", new_note) # Note already inserted
             update_notes(notes, self.notes_str(config), lambda: self.real_run(config, workdir, notes), workdir=workdir, note_ref='check-commit')
 
 

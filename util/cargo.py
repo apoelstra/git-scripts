@@ -165,7 +165,7 @@ class FuzzCommand(Command):
         super().run(env=env)
 
     def notes_str(self):
-        prefix = f"{self.full_ver_str}) cargo hfuzz run {self.args[1]} # iters {self.iters}"
+        prefix = f"{self.cargo.full_ver_str}) cargo hfuzz run {self.args[1]} # iters {self.iters}"
         if self.cargo.cwd_suffix is not None:
             prefix += ", cwd {self.cargo.cwd_suffix}"
         return prefix

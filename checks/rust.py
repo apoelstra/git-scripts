@@ -80,7 +80,8 @@ class RustCheck(Check):
                     for example in examples:
                         run_cargo_cmd(cargo.example_command(example), workdir, notes)
             elif job == 'fuzz':
-                tests = glob.glob(workdir + '/*.rs')
+                run_cargo_cmd(fuzz_cargo.test_command(self.features), workdir, notes)
+                tests = glob.glob(workdir + cwd_suffix + '/*.rs')
                 for test in tests:
                     test = test.split('/')[-1][:-3] # strip .rs
                     command = fuzz_cargo.fuzz_command(test, self.fuzz_iters)
