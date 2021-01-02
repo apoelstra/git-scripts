@@ -61,9 +61,13 @@ def main() -> None:
 
     ## If not already based on master, rebase and check each PR
     if master != base.hexsha:
-        for commit in commit_list:
+        rebased_commit_list = []
+        with TemporaryWorkdir(base.hexsha) as workdir:
+            for commit in commit_list:
+                rebased_commit_list.append(cherry_pick(workdir, commit))
+
+        for commit in rebased_commit_list:
             notes = []
-            new_head = cherry_pick(commit, commit)
             ## Run all commands
             for command in commands:
                 if commit == commit_list[-1] or not command.only_tip:
