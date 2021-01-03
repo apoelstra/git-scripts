@@ -4,7 +4,7 @@ import subprocess
 import toml
 from typing import Any, Dict, List, MutableMapping, Optional
 
-from util import colors, now_str
+from util import colors, log
 
 class Cargo:
     def __init__(self, version: Optional[str] = None, cwd: str = '.', cwd_suffix: Optional[str] = None, fuzz_target: bool = False, force_default_features: bool = False):
@@ -99,12 +99,12 @@ class Command:
 
     def run_str(self) -> str:
         prefix = f"{colors.yellow('cargo')} +{colors.bold(self.cargo.version):15} {colors.green(self.cmd):15} {self.args_str():40}"
-        prefix += f" # {now_str()}"
+        prefix += " # "
         if self.cargo.fuzz_target:
-            prefix += " RUST{DOC}FLAGS='--cfg=rust_secp_fuzz'"
+            prefix += "RUST{DOC}FLAGS='--cfg=rust_secp_fuzz' / "
         if self.cargo.cwd_suffix is not None:
-            prefix += f" / {self.cargo.cwd_suffix}"
-        prefix += f" / {self.cargo.full_ver_str}"
+            prefix += f"{self.cargo.cwd_suffix} / "
+        prefix += f"{self.cargo.full_ver_str}"
         return prefix
 
     def notes_str(self) -> str:
@@ -132,14 +132,14 @@ class Command:
         for arg in self.args:
             cmd.append(arg)
 
-        print(self.run_str())
+        log(self.run_str())
         completed = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.cargo.cwd, env=env)
         if completed.returncode != 0:
             if self.allow_fail:
-                print ("## (above command failed, continuing)")
+                log ("## (above command failed, continuing)")
             else:
-                print ("Command failed:", ' '.join(cmd))
-                print (completed.stderr.decode("ascii"))
+                log ("Command failed:", ' '.join(cmd))
+                log (completed.stderr.decode("ascii"))
                 completed.check_returncode() # trigger an exception
 
         return completed.stdout.decode("ascii")

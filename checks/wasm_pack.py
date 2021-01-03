@@ -1,5 +1,6 @@
 #!/bin/python
 
+from concurrent import futures
 import subprocess
 from typing import List
 
@@ -31,7 +32,7 @@ class WasmPackCheck(Check):
         prefix += f" # {now_str()} / {self.full_ver_str}"
         return prefix
 
-    def run(self, commit: str, notes: List[str]):
+    def run(self, executor: futures.ThreadPoolExecutor, commit: str, notes: List[str]):
         with TemporaryWorkdir(commit) as workdir:
             def real_run(features):
                 cmd = ['wasm-pack', 'test', '--node' ]
